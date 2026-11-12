@@ -1,0 +1,117 @@
+/* The report folder and its two work sheets. Native links also open in a new tab. */
+.food-ticket {
+  display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  overflow: hidden; border: 1px solid var(--line-dark); border-top: 4px solid var(--accent);
+  background: var(--surface); border-radius: 3px;
+}
+.food-ticket-copy, .food-ticket-total { padding: clamp(16px, 2.6vw, 32px); min-width: 0; }
+.food-ticket-copy h2 { margin: .3rem 0 .6rem; font: clamp(24px, 3vw, 38px)/1.12 Georgia, serif; }
+.food-ticket-copy > p { max-width: 64ch; margin: .7rem 0; }
+.food-ticket-copy > p:empty, #food-plan-error:empty { display: none; }
+.food-ticket-copy .form-grid { padding-block: .65rem; }
+.food-ticket-copy summary { cursor: pointer; min-height: 44px; padding-block: .6rem; }
+.food-ticket-total {
+  display: flex; flex-direction: column; justify-content: center;
+  background: #f0e6ce; border-left: 1px dashed var(--line-dark);
+}
+.food-ticket-total output { font: 650 clamp(32px, 4vw, 54px)/1.18 "Segoe UI", sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.food-ticket-total > span { color: #4b5542; font-size: .9rem; margin-bottom: .4rem; }
+.food-ticket-total p { font: .9rem/1.5 Consolas, monospace; margin: .55rem 0 0; overflow-wrap: anywhere; }
+.food-ticket-note { grid-column: 1 / -1; padding: .75rem 1.3rem; margin: 0; border-top: 1px dashed var(--line-dark); color: var(--muted); font-size: .85rem; }
+.effect-subheading { margin: 2rem 0 .75rem; }
+.food-ticket + .food-ticket { margin-top: 1rem; }
+.eco-ticket { border-top-color: #51613b; }
+.eco-ticket input { display: block; max-width: 12rem; margin-block: .35rem; }
+.eco-working { align-content: center; min-width: 0; padding: clamp(16px, 2.6vw, 32px); background: #eaf0dc; border-inline-start: 1px dashed var(--line-dark); }
+.eco-conversion { margin: 0 0 .75rem; font-variant-numeric: tabular-nums; }
+.eco-comparison { margin: 0; }
+.eco-comparison > div { padding-block: .55rem; border-top: 1px dashed var(--line-dark); }
+.eco-comparison dt { font-weight: 650; }
+.eco-comparison dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.eco-subtraction { margin: .5rem 0 0; padding-block-start: .8rem; border-top: 1px solid #72805e; }
+.eco-working output { font-weight: 700; color: #304624; }
+@media (max-width: 900px) {
+  .eco-working { border-inline-start: 0; border-top: 1px dashed var(--line-dark); }
+}
+@media (max-width: 900px) {
+  .food-ticket { grid-template-columns: minmax(0,1fr); }
+  .food-ticket-total { border-left: 0; border-top: 1px dashed var(--line-dark); }
+}
+@media (max-width: 580px) {
+  .food-ticket-copy .form-grid { grid-template-columns: minmax(0,1fr); }
+}
+.report-search { margin: 0 0 1.3rem; border-block: 1px solid var(--line); }
+.report-search > summary {
+  cursor: pointer; display: flex; flex-wrap: wrap; gap: .65rem; align-items: center;
+  min-height: 46px; padding: .6rem .25rem; font-weight: 650;
+}
+.report-search > summary::after { content: '+'; margin-inline-start: auto; }
+.report-search[open] > summary::after { content: '−'; }
+.report-search summary small { color: var(--muted); font-weight: 400; }
+.report-search .period-controls { margin: .4rem 0 1rem; }
+.report-stack { margin-block: 1.35rem 1.8rem; }
+.report-stack h2 { font-size: 1.05rem; margin-block-end: .65rem; }
+.report-slips { list-style: none; padding: 0; margin: 0; border: 1px solid var(--line-dark); background: var(--surface); }
+.report-slips li + li { border-top: 1px dashed var(--line); }
+.report-slip {
+  display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; gap: 1rem;
+  align-items: center; padding: 1rem 1.2rem; min-height: 64px; text-decoration: none;
+}
+.report-stack-working .report-slips { border-left: 4px solid var(--accent); background: #fbf3e1; }
+.slip-icon, .slip-arrow { display: grid; place-items: center; color: var(--muted); }
+.report-stack-working .slip-icon, .report-stack-working .slip-arrow { color: var(--accent-dark); }
+.slip-copy { min-width: 0; overflow-wrap: anywhere; }
+.slip-copy > strong, .slip-copy > small { display: block; }
+.slip-copy > strong { font: 1.25rem/1.25 Georgia, serif; }
+.slip-copy > small { margin-top: .23rem; color: var(--muted); }
+.slip-copy .slip-comment { color: var(--accent-dark); }
+.report-list-help { margin-block: 1rem; }
+.report-inputs { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(0,1fr); align-items: start; gap: 1rem; }
+.report-inputs > .panel { min-width: 0; margin-block: 0; }
+.report-input-card { border-top: 3px solid var(--accent); }
+.report-portions-card { border-top: 3px solid #546239; }
+.report-inputs .entry-form { background: var(--surface); border: 0; }
+.report-inputs .panel-header { justify-content: flex-start; align-items: center; gap: .8rem; }
+.report-inputs .entry-grid, .report-inputs .service-day-form .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.report-inputs .entry-grid > label { order: initial; min-width: 0; grid-column: auto; }
+.report-inputs .entry-grid .reason-field { grid-column: 1 / -1; }
+.report-inputs .entry-extra, .report-portions-list { border-top: 1px dashed var(--line); }
+.report-inputs .entry-extra > summary, .report-portions-list > summary { cursor: pointer; min-height: 44px; padding-block: .7rem; }
+.report-inputs :is(input, select, textarea) { min-width: 0; max-width: 100%; }
+.input-step { display: grid; place-items: center; flex: 0 0 2rem; height: 2rem; border: 1px solid currentColor; border-radius: 50%; font: 700 .85rem/1 Consolas, monospace; color: var(--accent-dark); }
+.report-portions-card .input-step { color: #45542f; }
+.report-input-note { color: var(--muted); font-size: .85rem; }
+.report-portions-rate { padding-top: 1rem; margin-top: 1rem; border-top: 1px dashed var(--line); }
+.input-jumps { display: none; }
+@media (max-width: 1200px) {
+  .report-inputs { grid-template-columns: minmax(0,1fr); }
+  .input-jumps { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+}
+@media (max-width: 580px) {
+  .report-slip { grid-template-columns: minmax(0,1fr) auto; gap: .5rem; padding: .85rem; }
+  .slip-icon, .slip-arrow { display: none; }
+  .report-slip .pill { justify-self: end; white-space: normal; text-align: center; }
+  .report-inputs .entry-grid, .report-inputs .service-day-form .form-grid { grid-template-columns: minmax(0,1fr); }
+  .input-jumps > button { flex: 1 1 auto; }
+}
+@media (hover: hover) {
+  .report-slip:hover { background: #f1ead7; }
+  .report-slip:hover .slip-copy > strong { text-decoration: underline; text-underline-offset: .18em; }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .slip-arrow { transition: transform 150ms ease-out; }
+  .report-slip:hover .slip-arrow { transform: translateX(3px); }
+}
+@keyframes tray-settle {
+  0% { transform: translateY(-3px) rotate(-5deg); }
+  56% { transform: translateY(1px) rotate(1.5deg); }
+  100% { transform: none; }
+}
+@keyframes folder-arrive {
+  from { opacity: .65; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ticket-tray { transform-origin: 80px 49px; animation: tray-settle 520ms ease-out both; }
+  .report-stack-working .report-slips { animation: folder-arrive 220ms ease-out both; }
+}

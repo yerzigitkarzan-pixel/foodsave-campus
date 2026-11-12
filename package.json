@@ -1,0 +1,10 @@
+{
+  "name": "foodsave-campus",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "python run.py --preview",
+    "test:ui": "node --test tests/test_routes.cjs tests/test_workbench.cjs"
+  },
+  "devDependencies": { "jsdom": "26.1.0" }
+}

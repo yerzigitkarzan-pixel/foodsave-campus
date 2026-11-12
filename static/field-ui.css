@@ -1,0 +1,365 @@
+@charset "UTF-8";
+
+/* FoodSave — a working canteen journal, with a printed weighing ticket. */
+:root {
+  --field-ink: #252b27;
+  --field-paper: #fffdf7;
+  --field-warm: #f4ebd8;
+  --field-rule: #b8b59d;
+  --field-rust: #b7472a;
+  --field-lime: #d9ef66;
+  --field-ease: cubic-bezier(.22,.7,.3,1);
+}
+body {
+  background-color: #eee9da;
+  background-image: repeating-linear-gradient(0deg, transparent 0 31px, #5a644b0c 31px 32px);
+}
+.content { padding-top: 26px; }
+.brand-mark.monogram {
+  border-radius: 2px;
+  border: 1px solid #f2f8ca;
+  box-shadow: 3px 3px 0 #111b1280;
+  font-family: "Bahnschrift", "Segoe UI Variable", sans-serif;
+  font-weight: 800;
+  letter-spacing: -1.2px;
+}
+.sidebar-edition { font-size: 11px; line-height: 1.65; }
+.sidebar-edition p { margin: 8px 0 0; font-family: "Segoe UI", sans-serif; letter-spacing: 0; text-transform: none; }
+.workspace { display: block; }
+.workspace-code { margin-bottom: 8px; }
+.nav a { border-left-width: 3px; }
+.nav a.active { border-left-color: var(--field-lime); }
+.topbar { background: #e9e3d2; }
+.demo-banner { margin-bottom: 20px; }
+
+/* The cover and ticket are part of one sheet, not a row of floating cards. */
+.campus-hero {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: minmax(0, 1.4fr) minmax(270px, 1fr);
+  border: 1px solid #979b85;
+  border-top: 4px solid var(--field-rust);
+  border-radius: 3px;
+  background: var(--field-paper);
+  box-shadow: 5px 5px 0 #252b270d;
+}
+.hero-copy { position: relative; padding: 31px 35px 30px; }
+.hero-copy::before {
+  content: "";
+  position: absolute;
+  top: 30px;
+  bottom: 30px;
+  left: 15px;
+  width: 1px;
+  background: #b7472a32;
+  pointer-events: none;
+}
+.hero-kicker { font-size: 11px; letter-spacing: 1.8px; margin-bottom: 21px; }
+.hero-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(44px, 4.7vw, 72px);
+  font-weight: 400;
+  line-height: .99;
+  letter-spacing: -2.5px;
+  text-wrap: balance;
+}
+.hero-copy > p { max-width: 40ch; color: #515d47; font-size: 14px; line-height: 1.7; }
+.hero-meta { margin-top: 23px; padding-top: 16px; gap: 15px; border-top-color: #c1c4ab; }
+.hero-meta small { color: #5c6652; font-size: 12px; }
+.hero-meta strong { color: #303c2b; font-size: 13px; }
+.hero-actions { margin-top: 24px; }
+.hero-actions > .btn { min-height: 49px; padding-inline: 19px; font-size: 14px; }
+.hero-metric.weighing-ticket {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  grid-template-rows: auto auto auto auto auto;
+  align-content: start;
+  align-items: start;
+  column-gap: 12px;
+  padding: 26px 28px;
+  border-left: 1px dashed #a79a7b;
+  color: var(--field-ink);
+  background: #f1e5cb;
+}
+.hero-metric.weighing-ticket::before {
+  content: "";
+  inset: 0;
+  z-index: -1;
+  opacity: .55;
+  background: repeating-linear-gradient(90deg, transparent 0 17px, #a69d7e0b 17px 18px);
+}
+.hero-metric.weighing-ticket::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 22px;
+  bottom: 22px;
+  width: 7px;
+  border-left: 1px solid #a79a7b66;
+  background: repeating-linear-gradient(0deg, transparent 0 9px, #8e977e 9px 10px, transparent 10px 18px);
+  pointer-events: none;
+}
+.ticket-head {
+  grid-column: 1 / -1;
+  padding-bottom: 13px;
+  margin-bottom: 19px;
+  border-bottom: 1px solid #aeb394;
+  color: #4c5b40;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.ticket-plate {
+  grid-column: 2;
+  grid-row: 2 / 4;
+  width: 96px;
+  height: 96px;
+  color: var(--field-rust);
+  opacity: .9;
+  justify-self: end;
+  pointer-events: none;
+}
+.weighing-ticket .hero-metric-label {
+  grid-column: 1;
+  min-width: 0;
+  margin: 0 0 13px;
+  padding: 0;
+  border: 0;
+  color: #3a4933;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.weighing-ticket .hero-number {
+  grid-column: 1 / -1;
+  margin-top: 7px;
+  color: var(--field-ink);
+  font-family: "Bahnschrift", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-size: clamp(54px, 6.5vw, 96px);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.02;
+  letter-spacing: -4px;
+}
+.weighing-ticket .hero-unit { grid-column: 1 / -1; margin: 11px 0 18px; color: #4e5d42; font-size: 13px; line-height: 1.6; }
+.ticket-records {
+  grid-column: 1 / -1;
+  padding-top: 14px;
+  border-top: 1px dashed #919a78;
+  color: #3e4e35;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.ticket-records strong { font-variant-numeric: tabular-nums; color: #263b25; }
+.weighing-ticket .hero-metric-note { grid-column: 1 / -1; max-width: none; margin-top: 12px; color: #556249; font-size: 12px; }
+
+/* Less frequently used controls can fold, while their summaries stay explicit. */
+.overview-controls, .overview-more {
+  margin: 0 0 23px;
+  padding: 0;
+  background: #f8f4e7;
+  border: 1px solid #b2b79e;
+  border-radius: 3px;
+}
+.overview-controls > summary, .overview-more > summary {
+  display: list-item;
+  min-height: 49px;
+  padding: 13px 18px;
+  color: #394d31;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.7;
+  list-style-position: inside;
+}
+.overview-controls[open] > summary, .overview-more[open] > summary { border-bottom: 1px solid #c2c7ae; background: #eaeed6; }
+.overview-controls-body { padding: 0 20px 18px; }
+.overview-controls-body .filters { margin-bottom: 15px; padding: 17px 0; border-top: 0; border-bottom: 1px dashed #aab397; }
+.overview-tools-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.overview-more > :not(summary) { margin-right: 20px; margin-left: 20px; }
+.overview-more > :last-child { margin-bottom: 20px; }
+.overview-more .measurement-insights { margin-top: 20px; }
+.compact-ledger { margin-top: 19px; box-shadow: none; }
+.compact-ledger .stat-card { min-height: 137px; }
+.overview-attention > summary.attention-summary {
+  padding: 18px 21px;
+  min-height: 52px;
+  color: #3b4d32;
+  font-weight: 650;
+  font-size: 14px;
+  line-height: 1.6;
+  list-style-position: inside;
+}
+.attention-summary strong { color: #3b4d32; font-size: 15px; }
+.attention-summary small { color: #536248; font-size: 12px; font-weight: 400; }
+.attention-summary .pill { margin-left: 8px; vertical-align: middle; }
+.overview-attention[open] > summary { border-bottom: 1px solid #c3c9af; margin-bottom: 17px; background: #f1eddd; }
+.panel-index { color: #985333; letter-spacing: 1.3px; }
+.overview-grid .panel { border-radius: 3px; box-shadow: 3px 3px 0 #252b270b; }
+.overview-grid .panel-header { align-items: flex-start; }
+.overview-grid .panel-header h2 { font-size: 19px; letter-spacing: -.4px; }
+.overview-ledger .stat-value { font-family: "Bahnschrift", "Segoe UI Variable", sans-serif; font-variant-numeric: tabular-nums; }
+
+/* The login is a journal cover. The input surface never moves or fades. */
+.journal-login .login-story { background: #29312b; }
+.journal-login .login-story::after {
+  opacity: .8;
+  background: radial-gradient(ellipse at 93% 64%, transparent 0 93px, #a8b79118 94px 95px, transparent 96px 113px, #a8b79120 114px 115px, transparent 116px 137px, #d4e49d20 138px 139px, transparent 140px), repeating-linear-gradient(0deg, transparent 0 47px, #dce7c00a 47px 48px);
+}
+.login-ledger-index { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 13px; border-bottom: 1px solid #758165; }
+.login-ledger-index strong { color: var(--field-lime); font-weight: 500; }
+.journal-login .login-copy { padding-top: 35px; padding-bottom: 35px; }
+.journal-login .login-copy h1 { max-width: 9ch; font-size: clamp(44px, 4.4vw, 70px); font-weight: 400; line-height: 1.03; letter-spacing: -2px; text-wrap: balance; }
+.journal-login .login-copy > p { max-width: 34ch; color: #c8d2b6; font-size: 15px; }
+.journal-login .login-box {
+  position: relative;
+  padding: 31px;
+  border-radius: 3px;
+  border: 1px solid #959d84;
+  border-top: 4px solid var(--field-rust);
+  box-shadow: 6px 6px 0 #252b2710;
+}
+.journal-login .login-box::before { content: ""; position: absolute; top: -4px; right: 22px; width: 36px; height: 4px; background: #b8ca58; pointer-events: none; }
+.login-form-index { color: #985333; letter-spacing: 1.6px; }
+.journal-login .login-box h2 { font-family: Georgia, "Times New Roman", serif; font-size: 32px; font-weight: 400; }
+.journal-login input { background: #fffdf7; border-color: #9ca68c; min-height: 49px; }
+.journal-login .login-guide summary { font-size: 13px; }
+
+/* Stable layout, small feedback; interaction never waits for a transition. */
+.btn { transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease, box-shadow 130ms ease; }
+.btn:disabled { cursor: not-allowed; }
+.hero-actions .btn .icon, .overview-tools-actions .btn .icon { transition: transform 140ms ease; }
+.nav a { transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease; }
+input,select,textarea { transition: border-color 100ms ease, box-shadow 100ms ease; }
+input:focus,select:focus,textarea:focus { border-color: var(--field-rust); box-shadow: 0 0 0 1px var(--field-rust); }
+.btn.danger { background: #fff0e8; color: #943b2a; border-color: #c5866d; }
+.toast { border-left-width: 5px; border-radius: 3px; }
+.toast.error { background: #7f2d20; color: #fff3e8; border-left-color: #efb19a; }
+@media (hover: hover) and (pointer: fine) {
+  .hero-actions .btn:hover, .overview-tools-actions .btn:hover { box-shadow: 2px 2px 0 #29312b2b; }
+  .hero-actions .btn:hover .icon, .overview-tools-actions .btn:hover .icon { transform: translateX(2px); }
+  .nav a:hover { border-right-color: #a6b08b; }
+  .overview-controls > summary:hover, .overview-more > summary:hover { background: #e9edd8; }
+  .overview-attention > summary:hover { background: #eee9d5; }
+}
+@keyframes field-title-in { from { opacity: .4; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+@keyframes field-reading-in { from { opacity: .35; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes field-ledger-in { from { opacity: .5; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes field-stamp-in { 0% { opacity: 0; transform: translateY(9px) rotate(-.6deg) scale(.98); } 72% { opacity: 1; transform: translateY(0) rotate(.12deg) scale(1.005); } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-title, .journal-login .login-copy h1 { animation: field-title-in 260ms var(--field-ease) both; }
+  .weighing-ticket .hero-number { animation: field-reading-in 300ms var(--field-ease) 35ms both; }
+  .overview-ledger .stat-card { animation: field-ledger-in 280ms var(--field-ease) both; }
+  .overview-ledger .stat-card:nth-child(2) { animation-delay: 45ms; }
+  .overview-ledger .stat-card:nth-child(3) { animation-delay: 75ms; }
+  .toast:not(.error) { animation: field-stamp-in 210ms var(--field-ease) both; }
+}
+
+/* All content remains available at 360 px; dense data scrolls locally. */
+@media (max-width: 1200px) {
+  .campus-hero { grid-template-columns: minmax(0, 1.35fr) minmax(250px, 1fr); }
+  .hero-copy { padding: 28px 27px 27px; }
+  .hero-copy::before { left: 12px; }
+  .hero-title { font-size: 53px; }
+  .hero-metric.weighing-ticket { padding: 25px; grid-template-columns: minmax(0, 1fr) 80px; }
+  .ticket-plate { width: 80px; height: 80px; }
+  .weighing-ticket .hero-number { font-size: 76px; }
+}
+@media (max-width: 1000px) {
+  .campus-hero { grid-template-columns: minmax(0, 1.25fr) minmax(235px, 1fr); }
+  .hero-copy { padding: 25px 24px; }
+  .hero-title { font-size: 45px; }
+  .hero-metric.weighing-ticket { padding: 23px; grid-template-columns: minmax(0, 1fr) 66px; }
+  .ticket-plate { width: 66px; height: 66px; }
+  .weighing-ticket .hero-number { font-size: 62px; letter-spacing: -2.7px; }
+  .hero-meta strong { font-size: 12px; }
+}
+@media (max-width: 760px) {
+  .content { padding-top: 22px; }
+  .hero-copy { padding: 26px; }
+  .hero-title { font-size: 48px; }
+  .hero-metric.weighing-ticket { padding: 24px; }
+  .weighing-ticket .hero-number { font-size: 66px; }
+  .hero-actions > .btn { min-height: 48px; }
+  .overview-controls-body { padding: 0 16px 17px; }
+  .overview-more > :not(summary) { margin-right: 16px; margin-left: 16px; }
+  .overview-tools-actions > .btn { flex: 1 1 150px; white-space: normal; }
+  .overview-controls > summary, .overview-more > summary { padding: 13px 16px; }
+  .journal-login .login-copy { padding: 24px 0 6px; }
+  .journal-login .login-copy h1 { max-width: 12ch; font-size: 42px; margin: 15px 0; }
+  .journal-login .login-copy > p { font-size: 14px; }
+  .journal-login .login-box { padding: 27px; }
+  .login-ledger-index { font-size: 10px; }
+}
+@media (max-width: 580px) {
+  .campus-hero { grid-template-columns: 1fr; }
+  .hero-copy { padding: 25px 26px; }
+  .hero-copy::before { top: 24px; bottom: 24px; }
+  .hero-title { max-width: 10ch; font-size: 49px; }
+  .hero-meta { margin-top: 19px; gap: 10px; }
+  .hero-actions { margin-top: 20px; }
+  .hero-actions > .btn { flex: 1 1 100%; }
+  .hero-metric.weighing-ticket { grid-template-columns: minmax(0, 1fr) 94px; border-left: 0; border-top: 1px dashed #a79a7b; padding: 23px 26px; }
+  .ticket-plate { width: 94px; height: 94px; }
+  .ticket-head { margin-bottom: 17px; }
+  .weighing-ticket .hero-number { font-size: clamp(53px, 17vw, 78px); letter-spacing: -3px; }
+  .weighing-ticket .hero-unit { margin-bottom: 15px; }
+  .overview-grid .panel-header h2 { font-size: 18px; }
+  .overview-tools-actions > .btn { flex-basis: 100%; }
+  .journal-login .login-copy h1 { max-width: 11ch; }
+}
+@media (max-width: 390px) {
+  .hero-copy { padding: 24px 22px; }
+  .hero-copy::before { left: 10px; }
+  .hero-title { font-size: 44px; letter-spacing: -1.7px; }
+  .hero-kicker { letter-spacing: 1.1px; }
+  .hero-metric.weighing-ticket { padding: 22px; grid-template-columns: minmax(0, 1fr) 78px; }
+  .ticket-plate { width: 78px; height: 78px; }
+  .weighing-ticket .hero-number { font-size: 59px; letter-spacing: -2.8px; }
+  .overview-controls > summary, .overview-more > summary { font-size: 13px; padding-right: 13px; padding-left: 13px; }
+  .overview-controls-body { padding-right: 13px; padding-left: 13px; }
+  .overview-more > :not(summary) { margin-right: 13px; margin-left: 13px; }
+  .overview-more .grid-equal { gap: 15px; }
+  .overview-attention > summary.attention-summary { padding: 15px 17px; }
+  .journal-login .login-box { padding: 25px 22px; }
+  .journal-login .login-copy h1 { font-size: 38px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-title, .journal-login .login-copy h1, .weighing-ticket .hero-number,
+  .overview-ledger .stat-card, .toast, .ticket-plate,
+  .btn, .nav a, .hero-actions .btn .icon, .overview-tools-actions .btn .icon,
+  input, select, textarea {
+    animation: none !important;
+    transition: none !important;
+  }
+  .hero-title, .journal-login .login-copy h1, .weighing-ticket .hero-number,
+  .overview-ledger .stat-card, .toast { transform: none !important; opacity: 1 !important; }
+}
+
+/* Match the compact overview's actual two-field and two-stat structure. */
+.hero-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ticket-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 7px 12px; }
+.ticket-head strong { font-size: 11px; font-weight: 400; white-space: nowrap; }
+.ticket-records { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ticket-records strong { font-family: "Bahnschrift", "Segoe UI Variable", sans-serif; font-size: 23px; line-height: 1.2; }
+.overview-attention { align-self: start; }
+.overview-attention > summary.attention-summary { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 12px; list-style: none; }
+.overview-attention > summary.attention-summary::-webkit-details-marker { display: none; }
+.overview-attention > summary.attention-summary::before { content: "▸"; position: absolute; left: 20px; top: 45px; color: var(--field-rust); }
+.overview-attention[open] > summary.attention-summary::before { content: "▾"; }
+.attention-summary > span:first-child { min-width: 0; padding-left: 18px; }
+.attention-summary .panel-index { margin-bottom: 6px; }
+.attention-summary strong, .attention-summary small { display: block; }
+.attention-summary small { margin-top: 5px; }
+.attention-summary .pill { margin-top: 21px; margin-left: 0; }
+.overview-more > summary strong { font-size: 14px; }
+.overview-more > summary small { display: block; margin-top: 4px; padding-left: 18px; color: #536248; font-size: 12px; font-weight: 400; }
+.compact-ledger { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.journal-login .login-copy > p.login-note { max-width: 38ch; margin-top: 21px; padding-top: 15px; border-top: 1px solid #6e7a60; color: #c8d2b6; font-size: 12px; line-height: 1.7; }
+@media (max-width: 1000px) { .hero-meta { grid-template-columns: 1fr; } }
+@media (max-width: 580px) { .compact-ledger { grid-template-columns: 1fr; } .ticket-records strong { font-size: 22px; } }
+@media (max-width: 390px) { .overview-attention > summary.attention-summary::before { left: 16px; top: 42px; } }
