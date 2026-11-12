@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "python run.py --preview",
-    "test:ui": "node --test tests/test_routes.cjs tests/test_workbench.cjs"
+    "test:ui": "node --test tests/test_routes.cjs tests/test_workbench.cjs tests/test_jury_mode.cjs"
   },
   "devDependencies": { "jsdom": "26.1.0" }
 }

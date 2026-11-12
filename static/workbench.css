@@ -1,4 +1,28 @@
 /* The report folder and its two work sheets. Native links also open in a new tab. */
+/* The jury controls are absent from a normal FastAPI session. */
+.jury-roles { display: grid; gap: 12px; margin: 22px 0 14px; }
+.jury-roles .btn { justify-content: space-between; text-align: left; white-space: normal; min-height: 64px; padding: 13px 15px; }
+.jury-roles .btn span { min-width: 0; }
+.jury-roles .btn small { display: block; margin-top: 5px; font-size: 12px; line-height: 1.5; font-weight: 400; color: inherit; }
+.jury-status { margin: 14px 0 18px; font-size: 12px; color: var(--muted); line-height: 1.65; }
+.jury-documents { display: flex; flex-wrap: wrap; gap: 7px 16px; }
+.jury-documents a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-dark); font-size: 12px; font-weight: 650; text-underline-offset: 4px; }
+.jury-scope { padding-top: 15px; margin: 14px 0 0; border-top: 1px dashed var(--line-dark); font-size: 12px; line-height: 1.7; color: var(--muted); }
+.jury-session { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; padding: 13px 16px; margin-bottom: 18px; background: #e9edd8; border: 1px solid #aab698; border-radius: 3px; }
+.jury-session > div { min-width: 0; }
+.jury-session strong { display: block; color: #344a2e; font-size: 13px; }
+.jury-session small { display: block; color: #526749; font-size: 12px; margin-top: 3px; }
+@media (max-width: 760px) {
+  .jury-mode .login-story { padding: 24px; }
+  .jury-mode .login-copy { padding: 23px 0 0; }
+  .jury-mode .login-copy h1 { font-size: 36px; margin: 10px 0 14px; }
+  .jury-mode .login-copy > p, .jury-mode .login-copy .login-note, .jury-mode .login-ledger-index { display: none; }
+  .jury-mode .login-main { padding-top: 24px; }
+  .jury-mode .login-box h2 { font-size: 29px; }
+  .jury-session { align-items: flex-start; padding: 13px 14px; }
+  .jury-session .jury-documents { flex-basis: 100%; }
+  .jury-session > .btn { width: 100%; }
+}
 .food-ticket {
   display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
   overflow: hidden; border: 1px solid var(--line-dark); border-top: 4px solid var(--accent);

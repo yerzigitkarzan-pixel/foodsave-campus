@@ -2,6 +2,8 @@
 'use strict';
 
 const API = '/api/v1';
+const juryMode = () => window.FOODSAVE_JURY_MODE === true;
+let juryPreparation = null;
 const foodPlanFields=[
   {name:'portions_per_day',label:'Лишних порций в день',base:5,max:100000},
   {name:'cost_per_portion',label:'Продукты на порцию, ₸',base:200,max:1000000},
@@ -14,6 +16,7 @@ const S = {
   reportId: null, report: null, reportGuide: false, reportsPage: 1, registryPage: 1,
   settingsTab: 'types', chat: [], agentBusy: false, loadToken: 0,
   modal: null, pendingEntry: null, economyResult: null, authEpoch: 0,
+  juryBusy: false, juryStatus: '', jurySelection: 0,
   foodPlan: defaultFoodPlan(),
   ecologyExampleMass: '100',
   economy: {records_per_period:300,reports_per_period:5,manual_minutes_per_entry:2,system_minutes_per_entry:1,manual_minutes_per_report:60,system_minutes_per_report:10,periods_per_year:12,hourly_cost:0,realizable_fraction:0,capex:0,annual_opex:0}
@@ -79,6 +82,20 @@ const qs = obj => {const q=new URLSearchParams();for(const [k,v] of Object.entri
 const orgName = id => S.organizations.find(x=>String(x.id)===String(id))?.name || S.user?.organization_name || 'Все организации';
 
 class ApiError extends Error {constructor(message,status,code,fields){super(message);this.status=status;this.code=code;this.fields=fields;}}
+async function fetchApi(url, options={}) {
+  if(juryMode()){
+    const bridge=window.FoodSaveJury;
+    if(!bridge||typeof bridge.fetch!=='function')throw new Error('Браузерная демонстрация ещё не подготовлена. Обновите страницу и повторите вход.');
+    return bridge.fetch(url,options);
+  }
+  return fetch(url,options);
+}
+function clearSessionState(){
+  clearUserDrafts();S.authEpoch++;S.loadToken++;S.agentBusy=false;S.economyResult=null;S.pendingEntry=null;
+  S.user=null;S.csrf='';S.chat=[];S.report=null;S.reportId=null;S.reportGuide=false;S.reportTypes=null;
+  S.organizations=[];S.methods=[];S.wasteTypes=[];S.users=[];S.settingsTab='types';S.filters={};
+  closeModal();
+}
 async function api(path, options={}) {
   const method=options.method || 'GET';
   const requestEpoch=S.authEpoch;
@@ -86,16 +103,73 @@ async function api(path, options={}) {
   if(options.body!==undefined)headers['Content-Type']='application/json';
   if(!['GET','HEAD'].includes(method))headers['X-CSRF-Token']=S.csrf;
   let response;
-  try {response=await fetch(API+path,{method,headers,credentials:'same-origin',...(options.body!==undefined?{body:JSON.stringify(options.body)}:{})});}
-  catch {throw new ApiError('Не удалось связаться с сервером. Проверьте, запущено ли приложение, и повторите действие.',0,'network');}
+  try {response=await fetchApi(API+path,{method,headers,credentials:'same-origin',...(options.body!==undefined?{body:JSON.stringify(options.body)}:{})});}
+  catch {throw new ApiError(juryMode()?'Не удалось выполнить запрос в браузерной демонстрации. Повторите действие; при необходимости обновите страницу.':'Не удалось связаться с сервером. Проверьте, запущено ли приложение, и повторите действие.',0,'network');}
   const data=await response.json().catch(()=>({}));
+  if(requestEpoch!==S.authEpoch)throw new ApiError('Сессия изменилась. Повторите действие в выбранной роли.',409,'stale_session');
   if(!response.ok){
     const error=data.error || {};
     const details=Array.isArray(data.detail)?data.detail.map(x=>x.msg).join('; '):data.detail;
-    if(response.status===401 && S.user && requestEpoch===S.authEpoch){clearUserDrafts();S.authEpoch++;S.agentBusy=false;S.user=null;S.chat=[];renderLogin('Сессия закончилась. Войдите ещё раз.');}
+    if(response.status===401 && S.user && requestEpoch===S.authEpoch){clearSessionState();renderLogin('Сессия закончилась. Войдите ещё раз.');}
     throw new ApiError(error.message || details || `Ошибка запроса (${response.status})`,response.status,error.code || '',error.fields);
   }
   return data;
+}
+async function prepareJury(){
+  if(!juryPreparation){
+    juryPreparation=(async()=>{
+      const meta=await api('/meta');
+      if(meta.demo!==true)throw new Error('Для режима жюри требуется отдельная демонстрационная база.');
+      S.meta=meta;S.reportPeriod=S.meta.current_month;S.filters={from:S.meta.default_from,to:S.meta.default_to};
+      S.csrf=(await api('/auth/csrf')).csrf_token;
+      S.juryStatus='Демонстрационная база готова. Выберите роль.';
+      document.body.dataset.juryState='ready';
+    })().catch(error=>{juryPreparation=null;document.body.dataset.juryState='error';S.juryStatus='Подготовку можно повторить кнопкой выбранной роли.';throw error;});
+  }
+  return juryPreparation;
+}
+async function signIn(credentials,openOverview=false){
+  const token=await api('/auth/csrf');S.csrf=token.csrf_token;
+  const data=await api('/auth/login',{method:'POST',body:credentials});
+  S.user=data.user;S.csrf=data.csrf_token||S.csrf;S.authEpoch++;S.loadToken++;
+  S.agentBusy=false;S.pendingEntry=null;S.economyResult=null;S.report=null;S.reportTypes=null;S.modal=null;S.settingsTab='types';
+  S.economy={records_per_period:300,reports_per_period:5,manual_minutes_per_entry:2,system_minutes_per_entry:1,manual_minutes_per_report:60,system_minutes_per_report:10,periods_per_year:12,hourly_cost:0,realizable_fraction:0,capex:0,annual_opex:0};
+  await loadCatalogs();S.filters={from:S.meta.default_from,to:S.meta.default_to,organization_id:isReviewer()?'':S.user.organization_id};
+  S.reportPeriod=isReviewer()?S.meta.current_month:'';S.reportStatus='';S.reportOrg='';S.reportsPage=1;S.registryPage=1;S.reportId=null;S.reportGuide=false;S.chat=[];
+  if(openOverview)history.replaceState(null,'','#overview');
+  await navigateLocation();
+}
+function juryPresentationLinks(){
+  return '<nav class="jury-documents" aria-label="Презентация"><a href="./docs/presentation/FoodSave-Campus-KK.pdf">Презентация · PDF ↗</a><a href="./docs/presentation/FoodSave-Campus-KK.pptx">Скачать PPTX ↗</a></nav>';
+}
+function juryLoginContent(error=''){
+  return `<div class="login-form-index">Демонстрация для жюри</div><h2>Открыть FoodSave</h2><p>Выберите роль и откройте основной интерфейс с работающими формами.</p><div id="login-error" class="login-error">${error?`<div class="notice error" role="alert">${e(error)}</div>`:''}</div><div class="jury-roles" aria-busy="${S.juryBusy}"><button type="button" class="btn full" data-action="jury-login" data-value="iskander"${S.juryBusy?' disabled':''}><span>Открыть как сотрудник<small>Столовая «Искандер» · ввод взвешиваний</small></span>${icon('arrow')}</button><button type="button" class="btn secondary full" data-action="jury-login" data-value="reviewer"${S.juryBusy?' disabled':''}><span>Открыть как проверяющий<small>Возврат, принятие и общая аналитика</small></span>${icon('shield')}</button></div><p id="jury-status" class="jury-status" role="status">${e(S.juryStatus||'Подготавливаем демонстрационную базу в браузере. Можно выбрать роль уже сейчас.')}</p>${juryPresentationLinks()}<p class="jury-scope">Данные примера сохраняются в этом браузере.</p>`;
+}
+function jurySessionBar(){
+  return `<div class="jury-session"><div><strong>Режим для жюри</strong><small>Основное приложение · демонстрационные данные</small></div>${juryPresentationLinks()}${button('Выбрать роль','logout',{class:'secondary small',icon:'users'})}</div>`;
+}
+async function enterJuryRole(username,preserveLocation=false){
+  if(!juryMode()||S.juryBusy||!['iskander','reviewer'].includes(username))return;
+  S.juryBusy=true;
+  $('.jury-roles')?.setAttribute('aria-busy','true');
+  const controls=[...document.querySelectorAll('[data-action="jury-login"]')];
+  for(const control of controls)control.disabled=true;
+  const status=$('#jury-status');if(status)status.textContent='Подготавливаем выбранную роль…';
+  const errorBox=$('#login-error');if(errorBox)errorBox.innerHTML='';
+  try{
+    await prepareJury();
+    if(typeof window.FoodSaveJury?.credentials!=='function')throw new Error('Вход в демонстрацию ещё не готов. Повторите выбор роли.');
+    const credentials=await window.FoodSaveJury.credentials(username);
+    if(!credentials||credentials.username!==username||typeof credentials.password!=='string'||!credentials.password)throw new Error('Не удалось подготовить выбранную демонстрационную роль.');
+    await signIn({username:credentials.username,password:credentials.password},!preserveLocation);
+  }catch(error){
+    if($('#login-error'))$('#login-error').innerHTML=`<div class="notice error" role="alert">${e(error.message)}</div>`;
+    if($('#jury-status'))$('#jury-status').textContent='Выберите роль, чтобы повторить вход.';
+  }finally{
+    S.juryBusy=false;
+    $('.jury-roles')?.setAttribute('aria-busy','false');
+    for(const control of controls)control.disabled=false;
+  }
 }
 
 function toast(message,error=false) {
@@ -118,7 +192,8 @@ function renderLogin(error=''){
   S.foodPlan=defaultFoodPlan();
   S.ecologyExampleMass='100';
   document.body.classList.remove('sidebar-open');
-  $('#app').innerHTML=`<div class="login-screen journal-login"><aside class="login-story"><a class="brand" href="#"><span class="brand-mark monogram" aria-hidden="true">FS</span><span class="brand-name">FoodSave<span>Campus / АТУ</span></span></a><div class="login-ledger-index"><span>Университетский комплекс</span><strong>АТУ / ${e((S.meta.today||'').slice(0,4)||'—')}</strong></div><div class="login-copy"><div class="eyebrow">FoodSave Campus</div><h1>Журнал учёта<br><em>отходов.</em></h1><p>Сотрудник вносит взвешивания. Проверяющий принимает месячный отчёт.</p><p class="login-note">Килограммы и литры учитываются отдельно.</p></div><div class="login-bottom"><span>Smart Food Industries</span><span>${S.meta.demo?'Демонстрационный журнал':'Рабочий журнал'}</span></div></aside><main class="login-main"><div class="login-box"><div class="login-form-index">Вход</div><h2>Войти в журнал</h2><p>Используйте учётную запись своей организации.</p><div id="login-error" class="login-error">${error?`<div class="notice error" role="alert">${e(error)}</div>`:''}</div><form id="login-form"><label>Логин<input name="username" autocomplete="username" placeholder="${S.meta.demo?'Например, iskander':'Например, reviewer'}" required autofocus></label><label>Пароль<input type="password" name="password" autocomplete="current-password" placeholder="Введите пароль" required></label><button type="submit" class="btn full">Войти${icon('arrow')}</button></form><details class="login-guide"><summary>Как получить доступ</summary><p>Индивидуальные пароли находятся в терминале запуска или в <code>.local/${S.meta.demo?'DEMO_ACCESS.txt':'REAL_ACCESS.txt'}</code> на компьютере с сервером.</p><p>${S.meta.demo?'Проверяющий: <code>reviewer</code><br>Столовая: <code>iskander</code>':'Учётную запись организации выдаёт администратор.'}</p></details><div class="login-version">FoodSave Campus · ${e(S.meta.version||'1.0')} · ${S.meta.demo?'Демоданные':'Локально'}</div></div></main></div>`;
+  document.body.classList.toggle('jury-mode',juryMode());
+  $('#app').innerHTML=`<div class="login-screen journal-login"><aside class="login-story"><a class="brand" href="#"><span class="brand-mark monogram" aria-hidden="true">FS</span><span class="brand-name">FoodSave<span>Campus / АТУ</span></span></a><div class="login-ledger-index"><span>Университетский комплекс</span><strong>АТУ / ${e((S.meta.today||'').slice(0,4)||'—')}</strong></div><div class="login-copy"><div class="eyebrow">FoodSave Campus</div><h1>Журнал учёта<br><em>отходов.</em></h1><p>Сотрудник вносит взвешивания. Проверяющий принимает месячный отчёт.</p><p class="login-note">Килограммы и литры учитываются отдельно.</p></div><div class="login-bottom"><span>Smart Food Industries</span><span>${S.meta.demo?'Демонстрационный журнал':'Рабочий журнал'}</span></div></aside><main class="login-main"><div class="login-box">${juryMode()?juryLoginContent(error):`<div class="login-form-index">Вход</div><h2>Войти в журнал</h2><p>Используйте учётную запись своей организации.</p><div id="login-error" class="login-error">${error?`<div class="notice error" role="alert">${e(error)}</div>`:''}</div><form id="login-form"><label>Логин<input name="username" autocomplete="username" placeholder="${S.meta.demo?'Например, iskander':'Например, reviewer'}" required autofocus></label><label>Пароль<input type="password" name="password" autocomplete="current-password" placeholder="Введите пароль" required></label><button type="submit" class="btn full">Войти${icon('arrow')}</button></form><details class="login-guide"><summary>Как получить доступ</summary><p>Индивидуальные пароли находятся в терминале запуска или в <code>.local/${S.meta.demo?'DEMO_ACCESS.txt':'REAL_ACCESS.txt'}</code> на компьютере с сервером.</p><p>${S.meta.demo?'Проверяющий: <code>reviewer</code><br>Столовая: <code>iskander</code>':'Учётную запись организации выдаёт администратор.'}</p></details>`}<div class="login-version">FoodSave Campus · ${e(S.meta.version||'1.0')} · ${S.meta.demo?'Демоданные':'Локально'}</div></div></main></div>`;
 }
 
 function renderShell(){
@@ -139,7 +214,7 @@ async function navigateLocation(){
   await navigate(target.route,true);
 }
 function pageContent(html){
-  return demoBanner()+html+'<footer class="view-footer"><span>'+icon('leaf')+'FoodSave Campus · Smart Food Industries</span></footer>';
+  return (juryMode()?jurySessionBar():'')+demoBanner()+html+'<footer class="view-footer"><span>'+icon('leaf')+'FoodSave Campus · Smart Food Industries</span></footer>';
 }
 async function navigate(route='overview',fromAddress=false){
   if(!S.user)return;
@@ -474,11 +549,12 @@ function organizationModal(item=null){const x=item||{};openModal('organization',
 function userModal(item=null){const x=item||{};openModal('user',item?'Изменить пользователя':'Новый пользователь',`<div class="form-grid"><label class="full-width">ФИО<input name="full_name" value="${e(x.full_name||'')}" required maxlength="120"></label><label>Логин<input name="username" value="${e(x.username||'')}" required minlength="3" maxlength="80" autocomplete="off"${item?' readonly':''}></label><label>${item?'Новый пароль (необязательно)':'Пароль'}<input type="password" name="password" minlength="10" maxlength="128" autocomplete="new-password"${item?'':' required'}></label><label>Роль<select name="role" data-user-role>${option('operator','Ответственное лицо',x.role||'operator')}${option('reviewer','Проверяющий',x.role)}</select></label><label>Организация<select name="organization_id" data-user-org>${option('','Все (для проверяющего)',x.organization_id)}${S.organizations.map(o=>option(o.id,o.name,x.organization_id)).join('')}</select></label>${item?`<label class="check-label full-width"><input type="checkbox" name="active"${x.active!==0&&x.active!==false?' checked':''}>Пользователь активен</label>`:''}</div><p class="form-help section-gap">Ответственное лицо привязано к одной организации. Пароль — минимум 10 символов. Передайте его пользователю отдельно; приложение не показывает сохранённые пароли.</p>`,{id:x.id});}
 function methodModal(item=null){const x=item||{};openModal('method',item?'Изменить способ':'Новый способ обращения',`<div class="form-grid"><label class="full-width">Наименование<input name="name" value="${e(x.name||'')}" required maxlength="180"></label><label>Код<input name="code" value="${e(x.code||'')}" required pattern="[A-Z][A-Z0-9_]*" maxlength="20" placeholder="Например, COMPOST"${item?' readonly':''}></label><label>Приоритет<input type="number" name="priority" value="${e(x.priority??5)}" min="1" max="99" step="1" required${item?' disabled':''}></label><label class="full-width">Справочный коэффициент, кг CO₂-экв./т<input value="${e(x.factor===null||x.factor===undefined?'Не задан':x.factor)}" readonly></label><label class="full-width">Источник и примечания<textarea name="note" maxlength="1000" placeholder="Укажите источник, материал и границы применимости">${e(x.note||'')}</textarea></label>${item?`<label class="check-label full-width"><input type="checkbox" name="active"${x.active!==false&&x.active!==0?' checked':''}>Способ активен</label>`:''}</div><p class="form-help section-gap">Новый способ создаётся без коэффициента CO₂. Для задания фактора нужна проверенная методика и обновление исходного справочника. Снимки принятых измерений сохраняются.</p>`,{id:x.id});}
 
-function draftKey(){return S.user&&S.report?`foodsave:draft:${S.user.id}:${S.report.organization_id}:${S.report.id}`:'';}
+function draftPrefix(){return juryMode()?'foodsave:jury:draft:':'foodsave:draft:';}
+function draftKey(){return S.user&&S.report?`${draftPrefix()}${S.user.id}:${S.report.organization_id}:${S.report.id}`:'';}
 function saveEntryDraft(){const form=$('#entry-form'),key=draftKey();if(!form||!key)return;try{localStorage.setItem(key,JSON.stringify(Object.fromEntries(new FormData(form))));}catch{/* Storage may be unavailable in private mode. */}}
 function restoreEntryDraft(){const form=$('#entry-form'),key=draftKey();if(!form||!key)return;try{const data=JSON.parse(localStorage.getItem(key)||'null');if(!data)return;for(const [k,v] of Object.entries(data)){const field=form.elements.namedItem(k);if(field)field.value=v;}updateEntryUnit(form,false);const extra=$('.entry-extra',form);if(extra&&data.note)extra.open=true;if(data.date)fillServiceDate($('#service-day-form'),form.elements.namedItem('date').value,S.report);}catch{/* Ignore incomplete/expired draft. */}}
 function clearEntryDraft(){try{if(draftKey())localStorage.removeItem(draftKey());}catch{}}
-function clearUserDrafts(){try{const prefix=`foodsave:draft:${S.user?.id}:`;for(const key of Object.keys(localStorage))if(key.startsWith(prefix))localStorage.removeItem(key);}catch{}}
+function clearUserDrafts(){try{const prefix=`${draftPrefix()}${S.user?.id}:`;for(const key of Object.keys(localStorage))if(key.startsWith(prefix))localStorage.removeItem(key);}catch{}}
 function updateEntryUnit(form,changeMethod=true){
   const select=form?.elements.namedItem('waste_type_id');if(!select)return;
   const type=(S.reportTypes||S.wasteTypes).find(t=>String(t.id)===String(select.value));
@@ -520,10 +596,14 @@ async function mutateReport(action,comment){
   S.report=result;toast(({submit:'Отчёт отправлен на проверку','start-review':'Проверка начата',return:'Отчёт возвращён с комментарием',accept:'Отчёт принят. Реестр и аналитика обновлены'})[action]||'Сохранено');await navigate(S.route);
 }
 async function downloadExport(){
+  const requestEpoch=S.authEpoch;
   toast('Формируем Excel по выбранным фильтрам…');
-  const response=await fetch(API+'/exports/summary.xlsx?'+qs(S.filters),{credentials:'same-origin'});
+  const response=await fetchApi(API+'/exports/summary.xlsx?'+qs(S.filters),{credentials:'same-origin'});
+  if(requestEpoch!==S.authEpoch)throw new ApiError('Сессия изменилась. Повторите выгрузку в выбранной роли.',409,'stale_session');
   if(!response.ok){const d=await response.json().catch(()=>({}));throw new Error(d.error?.message||'Не удалось сформировать Excel.');}
-  const blob=await response.blob(),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`FoodSave_${S.filters.from}_${S.filters.to}.xlsx`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Отчёт Excel сформирован');
+  const blob=await response.blob();
+  if(requestEpoch!==S.authEpoch)throw new ApiError('Сессия изменилась. Повторите выгрузку в выбранной роли.',409,'stale_session');
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`FoodSave_${S.filters.from}_${S.filters.to}.xlsx`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Отчёт Excel сформирован');
 }
 
 document.addEventListener('submit',async event=>{
@@ -531,10 +611,7 @@ document.addEventListener('submit',async event=>{
   const submit=form.querySelector('button[type=submit]');if(submit)submit.disabled=true;
   try{
     if(form.id==='login-form'){
-      $('#login-error').innerHTML='';const token=await api('/auth/csrf');S.csrf=token.csrf_token;
-      const d=await api('/auth/login',{method:'POST',body:formObject(form)});S.user=d.user;S.csrf=d.csrf_token||S.csrf;S.authEpoch++;S.agentBusy=false;S.pendingEntry=null;S.economyResult=null;S.economy={records_per_period:300,reports_per_period:5,manual_minutes_per_entry:2,system_minutes_per_entry:1,manual_minutes_per_report:60,system_minutes_per_report:10,periods_per_year:12,hourly_cost:0,realizable_fraction:0,capex:0,annual_opex:0};
-      await loadCatalogs();S.filters={from:S.meta.default_from,to:S.meta.default_to,organization_id:isReviewer()?'':S.user.organization_id};
-      S.reportPeriod=isReviewer()?S.meta.current_month:'';S.reportStatus='';S.reportOrg='';S.reportsPage=1;S.registryPage=1;S.reportId=null;S.reportGuide=false;S.chat=[];await navigateLocation();
+      $('#login-error').innerHTML='';await signIn(formObject(form));
     }else if(form.id==='filter-form'){
       const d=formObject(form);if(d.from>d.to)throw new Error('Начало периода должно быть не позже окончания.');S.filters={...S.filters,...d};S.registryPage=1;await navigate(S.route);
     }else if(form.id==='report-filter-form'){
@@ -623,7 +700,8 @@ document.addEventListener('click',async event=>{
     if(action==='menu'){document.body.classList.toggle('sidebar-open');return;}
     if(action==='close-modal'){closeModal();return;}
     if(action==='reload'){await navigate(S.route);return;}
-    if(action==='logout'){await api('/auth/logout',{method:'POST',body:{}});clearUserDrafts();S.authEpoch++;S.agentBusy=false;S.economyResult=null;S.pendingEntry=null;S.user=null;S.csrf='';S.chat=[];S.report=null;S.reportId=null;renderLogin();return;}
+    if(action==='jury-login'){S.jurySelection++;await enterJuryRole(value);return;}
+    if(action==='logout'){await api('/auth/logout',{method:'POST',body:{}});clearSessionState();renderLogin();return;}
     if(action==='default-period'){S.filters={from:S.meta.default_from,to:S.meta.default_to,organization_id:isReviewer()?'':S.user.organization_id};S.registryPage=1;await navigate(S.route);return;}
     if(action==='export'){target.disabled=true;try{await downloadExport();}finally{target.disabled=false;}return;}
     if(action==='go-registry'){await navigate('registry');return;}
@@ -717,6 +795,30 @@ $('#modal').addEventListener('close',()=>{S.modal=null;});
 window.addEventListener('hashchange',()=>{if(S.user){saveEntryDraft();navigateLocation();}});
 
 async function start(){
+  if(juryMode()){
+    document.body.dataset.juryState='preparing';
+    const requestedRole=new URLSearchParams(location.search).get('role');
+    S.meta.demo=true;S.juryStatus='Подготавливаем демонстрационную базу в браузере. Можно выбрать роль уже сейчас.';
+    renderLogin();
+    try{
+      await prepareJury();
+      if(!S.juryBusy&&!S.user){
+        if(requestedRole==='iskander'&&new URLSearchParams(location.search).get('example')==='portions'){
+          const selection=S.jurySelection;
+          let exampleId=null;
+          try{if(typeof window.FoodSaveJury?.exampleReport==='function')exampleId=await window.FoodSaveJury.exampleReport();}
+          catch{/* The optional prepared example must not prevent entering the journal. */}
+          if(selection!==S.jurySelection||S.juryBusy||S.user)return;
+          if(Number.isSafeInteger(exampleId)&&exampleId>0)history.replaceState(null,'',FoodSaveRoutes.format('reports',exampleId,true));
+          else if(!location.hash)history.replaceState(null,'',FoodSaveRoutes.format('reports'));
+        }
+        if(['iskander','reviewer'].includes(requestedRole))await enterJuryRole(requestedRole,Boolean(location.hash));
+        else renderLogin();
+      }
+    }
+    catch(error){if(!S.juryBusy&&!S.user)renderLogin(error.message);}
+    return;
+  }
   try{
     S.meta=await api('/meta');S.reportPeriod=S.meta.current_month;S.filters={from:S.meta.default_from,to:S.meta.default_to};
     try{const me=await api('/auth/me');S.user=me.user;S.csrf=me.csrf_token||'';}

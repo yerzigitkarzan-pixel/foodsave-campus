@@ -8,9 +8,11 @@ FoodSave Campus асхана қызметкеріне тағам қалдығы�
 
 - [Қазақша таныстырылымды ашу — PDF, 11 слайд](docs/presentation/FoodSave-Campus-KK.pdf)
 - [PowerPoint нұсқасын жүктеу — PPTX](https://github.com/yerzigitkarzan-pixel/foodsave-campus/raw/refs/heads/main/docs/presentation/FoodSave-Campus-KK.pptx)
-- [Демонұсқаны браузерде ашу](https://yerzigitkarzan-pixel.github.io/foodsave-campus/)
+- [FoodSave Campus жүйесін ашу](https://yerzigitkarzan-pixel.github.io/foodsave-campus/?role=reviewer)
 
-Демонұсқада қалдық салмағы мен порция санын өзгертіп көріңіз. Мысалы, 200 порциядан 3 кг қалдық шықса, 100 порцияға 1,5 кг келеді. Экономика мен CO₂ көрсеткіштері оқу мысалдары бойынша есептеледі. Демонұсқаны жүктелген жобадағы `showcase/index.html` файлын ашып та пайдалануға болады.
+Сілтеме арқылы негізгі қолданба ашылады. Асхана қызметкері болып кіріп, қалдықты тіркеуге, порция санын жазуға және есепті тексеруге жіберуге болады. Сол браузерде тексеруші рөлін таңдап, жіберілген есепті бекітіңіз. GitHub Pages нұсқасында қолданбаның Python коды мен SQLite дерекқоры браузерде жұмыс істейді. Әр келуші өз үлгі деректерімен жұмыс істейді. Алғашқы жүктеуге интернет қажет.
+
+Серверден бірнеше құрылғыға ортақ есеп жүргізу үшін төмендегі іске қосу нұсқаулығын пайдаланыңыз. [Үш оқу мысалы](https://yerzigitkarzan-pixel.github.io/foodsave-campus/showcase/examples.html) да бөлек қолжетімді.
 
 ## Толық жүйені іске қосу
 
@@ -31,3 +33,7 @@ py -3.12 -m venv .venv
 - [Архитектура](docs/ARCHITECTURE.md) және [API сипаттамасы](API_CONTRACT.md)
 - [Экономика, экология және сынақ жоспары](docs/PROJECT_BRIEF.md)
 - [ИИ құралдарын пайдалану](docs/AI_USAGE.md) және [есепке қолданылған анықтамалық деректер](inputs/reference_cells.json)
+
+## GitHub Pages нұсқасын жаңарту
+
+Негізгі интерфейс екі нұсқада да `static/` бумасынан жүктеледі. Pages браузерде Pyodide 314.0.7 арқылы сол Python API мен SQLite базасын іске қосады. Python модульдері немесе анықтамалық өзгерсе, жоба бумасында `python browser_runtime/build_bundle.py` командасын орындап, `browser_runtime/foodsave_backend.zip` файлын кодпен бірге жариялаңыз. Үлгі жазбалар мен кіру деректері әр браузерде бірінші рет ашқанда жасалады.

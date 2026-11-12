@@ -1,119 +1,17 @@
 <!doctype html>
-<html lang="kk">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#252b27">
-  <meta name="description" content="FoodSave Campus: асхана қалдығын есепке алудың үш интерактивті оқу мысалы.">
-  <title>FoodSave Campus — интерактивті демо</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./app.js" defer></script>
+  <title>FoodSave Campus</title>
+  <script>
+    const main = new URL('../', location.href);
+    main.search = location.search;
+    if (!main.searchParams.has('role')) main.searchParams.set('role', 'reviewer');
+    main.hash = location.hash;
+    location.replace(main.href);
+  </script>
+  <noscript><meta http-equiv="refresh" content="0;url=../"></noscript>
 </head>
-<body>
-  <a class="skip-link" href="#main">Негізгі мазмұнға өту</a>
-  <header class="site-header shell">
-    <a class="brand" href="#main" aria-label="FoodSave Campus, негізгі бөлім">
-      <span class="brand-mark" aria-hidden="true">FS</span>
-      <span><strong>FoodSave Campus</strong><small>АТУ / асхана журналы</small></span>
-    </a>
-    <nav class="document-links" aria-label="Презентация файлдары">
-      <a href="../docs/presentation/FoodSave-Campus-KK.pdf">Презентация · PDF <span aria-hidden="true">↗</span></a>
-      <a href="../docs/presentation/FoodSave-Campus-KK.pptx">Презентация · PPTX <span aria-hidden="true">↗</span></a>
-    </nav>
-  </header>
-
-  <main class="shell" id="main">
-    <section class="introduction" aria-labelledby="page-title">
-      <p class="eyebrow">Жюриге арналған интерактивті демо</p>
-      <h1 id="page-title">Қалдықты өлшеу.<br><em>Нәтижені түсіну.</em></h1>
-      <p class="lede">Үш мысалдың сандарын өзгертіп көріңіз: қалдық мөлшері, азық-түлік шығыны және CO₂-баламасы қалай есептеледі?</p>
-      <p class="demo-note"><span aria-hidden="true">●</span> Оқу мысалы · есеп осы браузерде орындалады. Деректер серверге жіберілмейді.</p>
-      <nav class="section-links" aria-label="Мысалдар">
-        <a href="#measurement"><span>01</span> Өлшеу мен порциялар</a>
-        <a href="#economy"><span>02</span> Азық-түлік шығыны</a>
-        <a href="#ecology"><span>03</span> Экологиялық есеп</a>
-      </nav>
-    </section>
-
-    <section class="example" id="measurement" aria-labelledby="measurement-title">
-      <div class="example-heading"><span class="section-number" aria-hidden="true">01</span><div><p class="eyebrow">Бір күннің есебі</p><h2 id="measurement-title">100 порцияға қанша қалдық келеді?</h2></div></div>
-      <div class="example-body">
-        <form id="measurement-form" novalidate>
-          <div class="field-grid">
-            <label for="mass">Қалдық салмағы, кг<input id="mass" name="mass" type="text" inputmode="decimal" value="3" aria-describedby="mass-help" autocomplete="off"><small id="mass-help">0–10 000 кг · үш ондық таңбаға дейін</small></label>
-            <label for="portions">Бір күнде берілген порция саны<input id="portions" name="portions" type="text" inputmode="numeric" value="200" aria-describedby="portions-help" autocomplete="off"><small id="portions-help">Бос — белгісіз; 0 — порция берілмеген</small></label>
-            <label class="full-width" for="reason">Қалдықтың пайда болу себебі<select id="reason" name="reason">
-              <option value="preparation">Тазалау және дайындау</option>
-              <option value="overproduction">Артық дайындау</option>
-              <option value="spoilage">Бүліну немесе мерзімінің өтуі</option>
-              <option value="plate_leftovers">Тамақтан кейінгі қалдық</option>
-              <option value="other">Басқа себеп</option>
-              <option value="unspecified">Белгіленбеген</option>
-            </select></label>
-          </div>
-          <div class="form-actions"><button type="submit" class="button">Есептеу <span aria-hidden="true">→</span></button><button type="reset" class="button secondary">Бастапқы сандар</button></div>
-          <p class="input-message" id="measurement-error" role="status"></p>
-        </form>
-        <div class="result-ticket" aria-live="polite" aria-atomic="true">
-          <p class="ticket-label">100 порцияға шаққандағы қалдық</p>
-          <div class="large-result"><output id="measurement-result" for="mass portions">1,5</output><span>кг / 100 порция</span></div>
-          <p class="formula" id="measurement-formula">3 кг ÷ 200 × 100 = 1,5 кг</p>
-          <p class="result-detail" id="measurement-reason">Себеп: тазалау және дайындау.</p>
-          <p class="result-note" id="measurement-status">Бірдей порция санына шаққанда күндерді салыстыруға болады.</p>
-        </div>
-      </div>
-      <p class="section-note">Себеп қалдықты түсіндіруге көмектеседі. Ол есептің сандық нәтижесін өзгертпейді.</p>
-    </section>
-
-    <section class="example" id="economy" aria-labelledby="economy-title">
-      <div class="example-heading"><span class="section-number" aria-hidden="true">02</span><div><p class="eyebrow">Азық-түлікке кететін қаражат</p><h2 id="economy-title">Артық порциялар қанша тұрады?</h2></div></div>
-      <div class="example-body">
-        <form id="economy-form" novalidate>
-          <div class="field-grid">
-            <label for="extra-portions">Күніне артық қалатын порция<input id="extra-portions" name="extraPortions" type="text" inputmode="numeric" value="5" autocomplete="off"></label>
-            <label for="portion-cost">Бір порцияның азық-түлік құны, ₸<input id="portion-cost" name="portionCost" type="text" inputmode="decimal" value="200" autocomplete="off"></label>
-            <label for="work-days">Жұмыс күндерінің саны<input id="work-days" name="workDays" type="text" inputmode="numeric" value="20" autocomplete="off"></label>
-          </div>
-          <div class="form-actions"><button type="submit" class="button">Есептеу <span aria-hidden="true">→</span></button><button type="reset" class="button secondary">Бастапқы сандар</button></div>
-          <p class="input-message" id="economy-error" role="status"></p>
-        </form>
-        <div class="result-ticket money-ticket" aria-live="polite" aria-atomic="true">
-          <p class="ticket-label">Сатып алудан үнемдеуге болатын сома</p>
-          <div class="large-result"><output id="economy-result" for="extra-portions portion-cost work-days">20 000</output><span>теңге / көрсетілген кезең</span></div>
-          <p class="formula" id="economy-formula">5 × 200 ₸ × 20 = 20 000 ₸</p>
-          <p class="result-note">Үнем азық-түлікті аз сатып алғанда ғана пайда болады.</p>
-        </div>
-      </div>
-      <p class="section-note">Бұл — шартты мысал. АТУ-дың нақты сатып алуы мен өлшенген ақшалай үнемі көрсетілмеген.</p>
-    </section>
-
-    <section class="example" id="ecology" aria-labelledby="ecology-title">
-      <div class="example-heading"><span class="section-number" aria-hidden="true">03</span><div><p class="eyebrow">Бір масса, екі өңдеу тәсілі</p><h2 id="ecology-title">CO₂-баламасының айырмасы неден шығады?</h2></div></div>
-      <div class="example-body">
-        <form id="ecology-form" novalidate>
-          <label for="ecology-mass">Көкөністі тазалаудан қалған қалдық, кг<input id="ecology-mass" name="mass" type="text" inputmode="decimal" value="100" autocomplete="off"></label>
-          <details class="factor-settings"><summary>Екі коэффициентті өзгерту</summary><div class="field-grid">
-            <label for="landfill-factor">Полигон, кг CO₂-баламасы/т<input id="landfill-factor" name="landfillFactor" type="text" inputmode="decimal" value="700,21" autocomplete="off"></label>
-            <label for="compost-factor">Компосттау, кг CO₂-баламасы/т<input id="compost-factor" name="compostFactor" type="text" inputmode="decimal" value="8,88" autocomplete="off"></label>
-          </div><p class="field-help">Коэффициент бір тонна қалдықты өңдеуге шаққандағы есептік шығарындыларды көрсетеді. Бос мән белгісіз болып қалады; енгізілген 0 — нақты сан.</p></details>
-          <div class="form-actions"><button type="submit" class="button">Есептеу <span aria-hidden="true">→</span></button><button type="reset" class="button secondary">Бастапқы сандар</button></div>
-          <p class="input-message" id="ecology-error" role="status"></p>
-        </form>
-        <div class="result-ticket ecology-ticket" aria-live="polite" aria-atomic="true">
-          <p class="ticket-label">Өңдеу тәсілдерінің есептік айырмасы</p>
-          <div class="large-result"><output id="ecology-result" for="ecology-mass landfill-factor compost-factor">69,133</output><span>кг CO₂-баламасы</span></div>
-          <p class="formula" id="ecology-conversion">100 кг ÷ 1 000 = 0,1 т</p>
-          <dl class="comparison"><div><dt>Полигон</dt><dd id="landfill-result">0,1 × 700,21 = 70,021 кг CO₂-баламасы</dd></div><div><dt>Компосттау</dt><dd id="compost-result">0,1 × 8,88 = 0,888 кг CO₂-баламасы</dd></div></dl>
-          <p class="formula" id="ecology-formula">70,021 − 0,888 = 69,133 кг CO₂-баламасы</p>
-          <p class="result-note" id="ecology-status">Компосттаудың есептік шығарындылары төмен.</p>
-        </div>
-      </div>
-      <details class="source-note"><summary>Коэффициенттер мен есептің шектеулері</summary><p>Бастапқы сандар жобамен бірге берілген <code>reference.xlsx</code> анықтамалығынан алынған: «Виды отходов», G2:H2, тағам қалдықтары. Полигон — 700,21; компост/биогаз — 8,88 кг CO₂-баламасы/т.</p><p>Анықтамалықта UK DEFRA/BEIS 2024 және Climatiq көрсетілген. Қазақстан үшін бұл коэффициенттер бағдар ретінде қолданылады. Бұл есеп тек қалдықты өңдеу тәсілдерін салыстырады.</p></details>
-    </section>
-
-    <aside class="full-project" aria-labelledby="project-title"><div><p class="eyebrow">Жұмыс істейтін толық жоба</p><h2 id="project-title">Негізгі жүйеде не бар?</h2><p>Қызметкер мен тексерушінің бөлек кіруі, есепті қайтару және бекіту, ортақ тізілім, графиктер және Excel есебі. Толық жүйе Python, FastAPI және SQLite арқылы жергілікті серверде жұмыс істейді.</p></div><p class="browser-label">Осы бет — браузердегі оқу демосы.<br>Ол негізгі жүйенің дерекқорын өзгертпейді.</p></aside>
-    <footer class="site-footer"><span>FoodSave Campus / АТУ</span><span>Оқу мысалдары · деректер браузерде ғана</span></footer>
-  </main>
-  <noscript><p class="noscript shell">Есепті интерактивті өзгерту үшін JavaScript қосыңыз. Көрсетілген бастапқы сандар — оқу мысалдары.</p></noscript>
-</body>
+<body><a href="../">Открыть FoodSave Campus</a></body>
 </html>
